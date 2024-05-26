@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract DegenCoin is ERC20 {
+  address public owner;
+
+  constructor(uint256 initialSupply, string memory name, string memory symbol) ERC20(name, symbol) {
+    _mint(msg.sender, initialSupply);
+    owner = msg.sender;
+  }
+
+  modifier onlyOwner() {
+    require(msg.sender == owner, "Only owner can mint");
+    _;
+  }
+
+  function mint(address to, uint256 amount) public onlyOwner {
+    _mint(to, amount);
+  }
+
+  function transfer(address recipient, uint256 amount) public override returns (bool) {
+    _transfer(msg.sender, recipient, amount);
+    return true;
+  }
+
+  function burn(uint256 amount) public {
+    _burn(msg.sender, amount);
+  }
+
+  function redeem(uint256 amount, uint256 itemId) public {
+    _burn(msg.sender, amount);
+    
+  }
+}
