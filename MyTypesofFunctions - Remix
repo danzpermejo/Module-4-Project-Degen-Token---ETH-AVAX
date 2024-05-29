@@ -1,35 +1,56 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
+
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract DegenCoin is ERC20 {
-  address public owner;
+    address public owner;
 
-  constructor(uint256 initialSupply, string memory name, string memory symbol) ERC20(name, symbol) {
-    _mint(msg.sender, initialSupply);
-    owner = msg.sender;
-  }
+    // Event to log the redemption of tokens for an item
+    event Redeemed(address indexed from, uint256 amount, uint256 indexed itemId);
 
-  modifier onlyOwner() {
-    require(msg.sender == owner, "Only owner can mint");
-    _;
-  }
+    constructor(uint256 initialSupply, string memory name, string memory symbol) ERC20(name, symbol) {
+        _mint(msg.sender, initialSupply);
+        owner = msg.sender;
+    }
 
-  function mint(address to, uint256 amount) public onlyOwner {
-    _mint(to, amount);
-  }
-
-  function transfer(address recipient, uint256 amount) public override returns (bool) {
-    _transfer(msg.sender, recipient, amount);
-    return true;
-  }
-
-  function burn(uint256 amount) public {
-    _burn(msg.sender, amount);
-  }
-
-  function redeem(uint256 amount, uint256 itemId) public {
-    _burn(msg.sender, amount);
     
-  }
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner can mint");
+        _;
+    }
+
+    // Function to mint new tokens, only the owner can call this
+    function mint(address to, uint256 amount) public onlyOwner {
+        _mint(to, amount);
+    }
+
+    // Transfer function 
+    function transfer(address recipient, uint256 amount) public override returns (bool) {
+        _transfer(msg.sender, recipient, amount);
+        return true;
+    }
+
+    // Function to burn tokens 
+    function burn(uint256 amount) public {
+        _burn(msg.sender, amount);
+    }
+
+    // Function to redeem tokens
+    function redeem(uint256 amount, uint256 itemId) public {
+        require(balanceOf(msg.sender) >= amount, "Insufficient balance to redeem");
+
+        
+        _burn(msg.sender, amount);
+
+        
+        emit Redeemed(msg.sender, amount, itemId);
+
+        
+    }
+
+    // Function to check the balance of tokens
+    function checkBalance(address account) public view returns (uint256) {
+        return balanceOf(account);
+    }
 }
