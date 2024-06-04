@@ -1,56 +1,51 @@
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract DegenCoin is ERC20 {
-    address public owner;
+contract GameCoin is ERC20, Ownable {
+    event ItemRedeemed(address indexed redeemer, string item, uint256 quantity);
 
-    // Event to log the redemption of tokens for an item
-    event Redeemed(address indexed from, uint256 amount, uint256 indexed itemId);
-
-    constructor(uint256 initialSupply, string memory name, string memory symbol) ERC20(name, symbol) {
-        _mint(msg.sender, initialSupply);
-        owner = msg.sender;
+    struct Item {
+        uint256 quantity;
+        uint256 price;
     }
 
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner can mint");
-        _;
-    }
+    mapping(string => Item) public items;
 
-    // Function to mint new tokens, only the owner can call this
-    function mint(address to, uint256 amount) public onlyOwner {
+    constructor(address initialOwner) Ownable(initialOwner) ERC20("GameCoin", "GCN") {}
+
+    // Minting new tokens
+    function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
     }
 
-    // Transfer function 
-    function transfer(address recipient, uint256 amount) public override returns (bool) {
-        _transfer(msg.sender, recipient, amount);
-        return true;
-    }
-
-    // Function to burn tokens 
-    function burn(uint256 amount) public {
+    // Burning tokens
+    function burn(uint256 amount) external {
         _burn(msg.sender, amount);
     }
 
-    // Function to redeem tokens
-    function redeem(uint256 amount, uint256 itemId) public {
-        require(balanceOf(msg.sender) >= amount, "Insufficient balance to redeem");
-
-        
-        _burn(msg.sender, amount);
-
-        
-        emit Redeemed(msg.sender, amount, itemId);
-
-        
+    // Redeeming tokens
+    function redeem(string memory itemName, uint256 quantity) external {
+        Item storage item = items[itemName];
+        require(item.quantity >= quantity, "Not enough item quantity");
+        uint256 cost = item.price * quantity;
+        require(balanceOf(msg.sender) >= cost, "Insufficient token balance");
+        _burn(msg.sender, cost);
+        item.quantity -= quantity;
+        emit ItemRedeemed(msg.sender, itemName, quantity);
     }
 
-    // Function to check the balance of tokens
-    function checkBalance(address account) public view returns (uint256) {
+    // List an item in the in-game store
+    function listItem(string memory itemName, uint256 quantity, uint256 price) external onlyOwner {
+        items[itemName] = Item({
+            quantity: quantity,
+            price: price
+        });
+    }
+
+    // Checking token balance
+    function checkTheBalance(address account) external view returns (uint256) {
         return balanceOf(account);
     }
 }
