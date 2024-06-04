@@ -1,12 +1,19 @@
 # Module 4 | Project: Degen Token (ERC-20)
 
-The purpose of this program is to create a virtual currency called DegenCoin on the Avalanche network. This currency can be used within a game (presumably called Degen Gaming).  The program allows the game administrators (owners) to mint new coins, users to transfer coins between themselves, and burn unwanted coins. There's also a function to redeem coins for in-game items, but the details of how that works would be handled separately by the game itself.
+This smart contract defines a token called GameCoin (GCN) that can be used in an in-game store. Players can acquire GameCoins (likely through separate minting mechanisms) and then spend them using the redeem function to purchase items listed by the game owner (with listItem). The contract ensures players have sufficient tokens and manages item quantities to prevent overselling. Overall, it creates a system for players to spend their GameCoins on in-game items.
 
 ## Description
 
-This program acts as a blueprint for a virtual currency called DegenCoin on the Avalanche blockchain. Imagine it as a digital token for a game, possibly Degen Gaming. The program allows the game's administrators, who own the contract, to create new DegenCoins. Players can then trade these coins with each other or even get rid of unwanted ones by burning them. There's also a feature to redeem DegenCoins for in-game goodies, but how exactly that works would be handled within the game itself. This program sets the foundation for the DegenCoin economy within the game.
-
+This smart contract creates a secure marketplace within a game, functioning with a custom token called GameCoin (GCN). Players can acquire these tokens (likely through external mechanisms) and then spend them in an in-game store managed by the game owner. The store offers purchasable items, with the contract ensuring a fair exchange by verifying player funds, maintaining item stock, and burning spent tokens. This system allows players to manage their GameCoins and use them to acquire valuable in-game items.
 ## Getting Started
+
+### Functions of Smart Contract - GameCoin
+1. Minting New Tokens - Only owner can mint token 
+2. Transferring Tokens - Any players can transfer their tokens
+3. Redeeming Tokens - Players can definitely use their tokens in exchange for items in a game store setting
+4. Checking Token balance - Players will able to check their token balance
+5. Burning Tokens - Anyone can be able to burn tokens
+6. Listing an Item - The owner can list an item in-game store
 
 ### Executing program
 
@@ -15,69 +22,65 @@ To run this program, you can use Remix, an online Solidity IDE. To get started, 
 Once you are on the Remix website, create a new file by clicking on the "+" icon in the left-hand sidebar. Save the file with a .sol extension (e.g., HelloWorld.sol). Copy and paste the following code into the file:
 
 ```
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract DegenCoin is ERC20 {
-    address public owner;
+contract GameCoin is ERC20, Ownable {
+    event ItemRedeemed(address indexed redeemer, string item, uint256 quantity);
 
-    // Event to log the redemption of tokens for an item
-    event Redeemed(address indexed from, uint256 amount, uint256 indexed itemId);
-
-    constructor(uint256 initialSupply, string memory name, string memory symbol) ERC20(name, symbol) {
-        _mint(msg.sender, initialSupply);
-        owner = msg.sender;
+    struct Item {
+        uint256 quantity;
+        uint256 price;
     }
 
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner can mint");
-        _;
-    }
+    mapping(string => Item) public items;
 
-    // Function to mint new tokens, only the owner can call this
-    function mint(address to, uint256 amount) public onlyOwner {
+    constructor(address initialOwner) Ownable(initialOwner) ERC20("GameCoin", "GCN") {}
+
+    // Minting new tokens
+    function mint(address to, uint256 amount) external onlyOwner {
         _mint(to, amount);
     }
 
-    // Transfer function 
-    function transfer(address recipient, uint256 amount) public override returns (bool) {
-        _transfer(msg.sender, recipient, amount);
-        return true;
-    }
-
-    // Function to burn tokens 
-    function burn(uint256 amount) public {
+    // Burning tokens
+    function burn(uint256 amount) external {
         _burn(msg.sender, amount);
     }
 
-    // Function to redeem tokens
-    function redeem(uint256 amount, uint256 itemId) public {
-        require(balanceOf(msg.sender) >= amount, "Insufficient balance to redeem");
-
-        
-        _burn(msg.sender, amount);
-
-        
-        emit Redeemed(msg.sender, amount, itemId);
-
-        
+    // Redeeming tokens
+    function redeem(string memory itemName, uint256 quantity) external {
+        Item storage item = items[itemName];
+        require(item.quantity >= quantity, "Not enough item quantity");
+        uint256 cost = item.price * quantity;
+        require(balanceOf(msg.sender) >= cost, "Insufficient token balance");
+        _burn(msg.sender, cost);
+        item.quantity -= quantity;
+        emit ItemRedeemed(msg.sender, itemName, quantity);
     }
 
-    // Function to check the balance of tokens
-    function checkBalance(address account) public view returns (uint256) {
+    // List an item in the in-game store
+    function listItem(string memory itemName, uint256 quantity, uint256 price) external onlyOwner {
+        items[itemName] = Item({
+            quantity: quantity,
+            price: price
+        });
+    }
+
+    // Checking token balance
+    function checkTheBalance(address account) external view returns (uint256) {
         return balanceOf(account);
     }
 }
 
 
+
 ```
 
-To compile the code, click on the "Solidity Compiler" tab in the left-hand sidebar. Make sure the "Compiler" option is set to "0.8.25" (or another compatible version), and then click on the "MyTypeofFunctions-ETH+AVAX" button.
+To compile the code, click on the "Solidity Compiler" tab in the left-hand sidebar. Make sure the "Compiler" option is set to "0.8.25" (or another compatible version), and then click on the "DegenToken" button.
 
-Once the code is compiled, you can deploy the contract by clicking on the "Deploy & Run Transactions" tab in the left-hand sidebar. Select the "MyTypeofFunctions-ETH+AVAX" contract from the dropdown menu, and then click on the "Deploy" button.
+Once the code is compiled, you can deploy the contract by clicking on the "Deploy & Run Transactions" tab in the left-hand sidebar. Select the "DegenToken" contract from the dropdown menu, and then click on the "Deploy" button.
 
 Once the contract is deployed, you can interact with it by input your desired tokens and explore some of that functionality like Minting, Transferring, Redeeming tokens. Also you can check the token balance and burning tokens.
 
