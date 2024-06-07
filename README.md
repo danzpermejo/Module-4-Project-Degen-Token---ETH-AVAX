@@ -1,92 +1,37 @@
 # Module 4 | Project: Degen Token (ERC-20)
 
-This smart contract defines a token called GameCoin (GCN) that can be used in an in-game store. Players can acquire GameCoins (likely through separate minting mechanisms) and then spend them using the redeem function to purchase items listed by the game owner (with listItem). The contract ensures players have sufficient tokens and manages item quantities to prevent overselling. Overall, it creates a system for players to spend their GameCoins on in-game items.
+My DegenToken smart contract establishes a marketplace system built on top of an ERC20 token named "Degen" (DGN). The ERC20 functionality allows users to transfer, check their balance, and the owner to mint or burn tokens. The marketplace aspect is achieved through functionalities for listing items (only by the owner), creating trade offers for listed items, and redeeming those items by burning DGN tokens. The contract tracks trade offers and keeps a record of completed trades and item redemptions through events. Additionally, users can view specific trade details and their DGN token balance. Overall, this smart contract design facilitates a tokenized marketplace where users can interact by buying and selling items using the DGN token.
 
 ## Description
 
-This smart contract creates a secure marketplace within a game, functioning with a custom token called GameCoin (GCN). Players can acquire these tokens (likely through external mechanisms) and then spend them in an in-game store managed by the game owner. The store offers purchasable items, with the contract ensuring a fair exchange by verifying player funds, maintaining item stock, and burning spent tokens. This system allows players to manage their GameCoins and use them to acquire valuable in-game items.
-## Getting Started
+The DegenToken smart contract is an ERC20-compliant token built using the OpenZeppelin library, inheriting functionalities from both ERC20 and Ownable contracts. Named "Degen" with the symbol "DGN", it allows the contract owner to mint new tokens and users to burn their tokens. The contract also facilitates a marketplace for trading items represented by strings. Items can be listed by the owner with a specified quantity and price. Users can create trades, specifying the item name, quantity, and price, which are stored in a mapping and assigned a unique trade ID. Trades can be completed if the buyer has sufficient token balance, transferring tokens from the buyer to the seller and emitting corresponding events. The contract includes functionalities for redeeming items by burning tokens equivalent to the item’s price, listing new items, and querying trades and balances. This smart contract promotes decentralized trading and token utility within its ecosystem.
 
-### Functions of Smart Contract - GameCoin
-1. Minting New Tokens - Only owner can mint token 
-2. Transferring Tokens - Any players can transfer their tokens
-3. Redeeming Tokens - Players can definitely use their tokens in exchange for items in a game store setting
-4. Checking Token balance - Players will able to check their token balance
-5. Burning Tokens - Anyone can be able to burn tokens
-6. Listing an Item - The owner can list an item in-game store
+### Functions of Smart Contract
+1. ERC20 token (Degen - DGN):
+   - The contract inherits from OpenZeppelin's ERC20 implementation, enabling functionalities like transfers, balance checks, and token minting/burning.
+   - The constructor defines the token name as "Degen" and symbol as "DGN".
+2. Ownership:
+   - By inheriting from Ownable, the contract grants control to a single owner address.
+   - This owner has the privilege to mint new tokens and burn existing ones.
+3. Marketplace System:
+   - Two mappings manage item and trade data:
+     - items: Stores details (quantity and price) for redeemable items. Only the owner can add items using listItem.
+     - trades: Stores information on user-created trade offers.
+4. Users can create trade offers (createTrade) specifying the item name, quantity, and price.
+5. A tradeCounter generates unique IDs for each trade offer.
+6. Users can redeem items (redeem) by burning the required DGN tokens based on the listed item price.
+7. The completeTrade function allows users to accept a trade offer, burning their DGN and transferring them to the seller in exchange for the redeemed item.
+8. Events track actions:
+   - ItemTraded: Records trade completions.
+   - TradeCreated: Logs new trade offer creations.
+   - ItemRedeemed: Indicates item redemptions by users.
+9. getTrade: Allows retrieving details of a specific trade offer.
+10. CheckTheBalance: Enables users to check their DGN token balance.
 
-### Executing program
-
-To run this program, you can use Remix, an online Solidity IDE. To get started, go to the Remix website at https://remix.ethereum.org/.
-
-Once you are on the Remix website, create a new file by clicking on the "+" icon in the left-hand sidebar. Save the file with a .sol extension (e.g., HelloWorld.sol). Copy and paste the following code into the file:
-
-```
-pragma solidity ^0.8.20;
-
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-
-contract GameCoin is ERC20, Ownable {
-    event ItemRedeemed(address indexed redeemer, string item, uint256 quantity);
-
-    struct Item {
-        uint256 quantity;
-        uint256 price;
-    }
-
-    mapping(string => Item) public items;
-
-    constructor(address initialOwner) Ownable(initialOwner) ERC20("GameCoin", "GCN") {}
-
-    // Minting new tokens
-    function mint(address to, uint256 amount) external onlyOwner {
-        _mint(to, amount);
-    }
-
-    // Burning tokens
-    function burn(uint256 amount) external {
-        _burn(msg.sender, amount);
-    }
-
-    // Redeeming tokens
-    function redeem(string memory itemName, uint256 quantity) external {
-        Item storage item = items[itemName];
-        require(item.quantity >= quantity, "Not enough item quantity");
-        uint256 cost = item.price * quantity;
-        require(balanceOf(msg.sender) >= cost, "Insufficient token balance");
-        _burn(msg.sender, cost);
-        item.quantity -= quantity;
-        emit ItemRedeemed(msg.sender, itemName, quantity);
-    }
-
-    // List an item in the in-game store
-    function listItem(string memory itemName, uint256 quantity, uint256 price) external onlyOwner {
-        items[itemName] = Item({
-            quantity: quantity,
-            price: price
-        });
-    }
-
-    // Checking token balance
-    function checkTheBalance(address account) external view returns (uint256) {
-        return balanceOf(account);
-    }
-}
-
-
-
-```
-
-To compile the code, click on the "Solidity Compiler" tab in the left-hand sidebar. Make sure the "Compiler" option is set to "0.8.25" (or another compatible version), and then click on the "DegenToken" button.
-
-Once the code is compiled, you can deploy the contract by clicking on the "Deploy & Run Transactions" tab in the left-hand sidebar. Select the "DegenToken" contract from the dropdown menu, and then click on the "Deploy" button.
-
-Once the contract is deployed, you can interact with it by input your desired tokens and explore some of that functionality like Minting, Transferring, Redeeming tokens. Also you can check the token balance and burning tokens.
 
 ## Authors
 
-Danz Andrew M. Permeo (61903258)
+Danz Andrew M. Permeo (61903258@ntc.edu.ph)
 
 
 ## License
