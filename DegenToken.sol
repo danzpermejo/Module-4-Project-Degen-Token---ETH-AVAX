@@ -7,6 +7,7 @@ contract DegenToken is ERC20, Ownable {
     event ItemTraded(address indexed from, address indexed to, string item, uint256 quantity);
     event TradeCreated(uint256 tradeId, address indexed seller, string itemName, uint256 quantity, uint256 price);
     event ItemRedeemed(address indexed redeemer, string item, uint256 quantity);
+    event ItemReceived(address indexed receiver, string item, uint256 quantity);
 
     struct Item { uint256 quantity; uint256 price; }
 
@@ -14,6 +15,7 @@ contract DegenToken is ERC20, Ownable {
 
     mapping(string => Item) public items;
     mapping(uint256 => Trade) public trades;
+    mapping(address => mapping(string => uint256)) public redeemedItems;
     uint256 public tradeCounter;
 
     constructor(address initialOwner) Ownable(initialOwner) ERC20("Degen", "DGN") {}
@@ -26,11 +28,25 @@ contract DegenToken is ERC20, Ownable {
 
     function redeem(string memory itemName, uint256 quantity) external {
         Item storage item = items[itemName];
-        require(item.quantity >= quantity && item.price * quantity <= balanceOf(msg.sender), "Invalid redemption");
-        _burn(msg.sender, item.price * quantity);
+        require(item.quantity >= quantity, "Insufficient item quantity");
+        uint256 totalCost = item.price * quantity;
+        require(totalCost <= balanceOf(msg.sender), "Insufficient token balance");
+
+        
+        _burn(msg.sender, totalCost);
+
+        
         item.quantity -= quantity;
+
+        
+        redeemedItems[msg.sender][itemName] += quantity;
+
+        
         emit ItemRedeemed(msg.sender, itemName, quantity);
-    }   
+        
+        
+        emit ItemReceived(msg.sender, itemName, quantity);
+    }
 
     function listItem(string memory itemName, uint256 quantity, uint256 price) public onlyOwner {
         items[itemName] = Item({ quantity: quantity, price: price });
