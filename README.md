@@ -1,33 +1,19 @@
 # Module 4 | Project: Degen Token (ERC-20)
 
-My DegenToken smart contract establishes a marketplace system built on top of an ERC20 token named "Degen" (DGN). The ERC20 functionality allows users to transfer, check their balance, and the owner to mint or burn tokens. The marketplace aspect is achieved through functionalities for listing items (only by the owner), creating trade offers for listed items, and redeeming those items by burning DGN tokens. The contract tracks trade offers and keeps a record of completed trades and item redemptions through events. Additionally, users can view specific trade details and their DGN token balance. Overall, this smart contract design facilitates a tokenized marketplace where users can interact by buying and selling items using the DGN token.
+My DegenToken smart contract appears to be designed for a merchandise store. It creates a token named "Degen" (DGN) that users can acquire from the contract owner and spend to redeem items like hoodies and backpacks. The contract keeps track of how many of each item a user has purchased and ensures they have enough DGN tokens before allowing a redemption. Overall, this smart contract functions like a digital currency system for a merchandise store.
 
 ## Description
 
-The DegenToken smart contract is an ERC20-compliant token built using the OpenZeppelin library, inheriting functionalities from both ERC20 and Ownable contracts. Named "Degen" with the symbol "DGN", it allows the contract owner to mint new tokens and users to burn their tokens. The contract also facilitates a marketplace for trading items represented by strings. Items can be listed by the owner with a specified quantity and price. Users can create trades, specifying the item name, quantity, and price, which are stored in a mapping and assigned a unique trade ID. Trades can be completed if the buyer has sufficient token balance, transferring tokens from the buyer to the seller and emitting corresponding events. The contract includes functionalities for redeeming items by burning tokens equivalent to the item’s price, listing new items, and querying trades and balances. This smart contract promotes decentralized trading and token utility within its ecosystem.
+This Solidity smart contract functions like an internal token system for a digital merchandise store. It creates a custom token named "Degen" (DGN) that can be minted by the store owner and used by customers to purchase items. The contract manages a list of purchasable items like hoodies and backpacks, along with their set prices in DGN tokens. Customers can spend their DGN tokens to redeem these items, with the contract ensuring they have sufficient balance before completing the purchase. The contract also keeps track of a user's redemption history, recording how many of each item they've acquired. This allows users to view both the available merchandise and their own purchase history within the store.
 
 ### Functions of Smart Contract
-1. ERC20 token (Degen - DGN):
-   - The contract inherits from OpenZeppelin's ERC20 implementation, enabling functionalities like transfers, balance checks, and token minting/burning.
-   - The constructor defines the token name as "Degen" and symbol as "DGN".
-2. Ownership:
-   - By inheriting from Ownable, the contract grants control to a single owner address.
-   - This owner has the privilege to mint new tokens and burn existing ones.
-3. Marketplace System:
-   - Two mappings manage item and trade data:
-     - items: Stores details (quantity and price) for redeemable items. Only the owner can add items using listItem.
-     - trades: Stores information on user-created trade offers.
-4. Users can create trade offers (createTrade) specifying the item name, quantity, and price.
-5. A tradeCounter generates unique IDs for each trade offer.
-6. Users can redeem items (redeem) by burning the required DGN tokens based on the listed item price.
-7. The completeTrade function allows users to accept a trade offer, burning their DGN and transferring them to the seller in exchange for the redeemed item.
-8. Events track actions:
-   - ItemTraded: Records trade completions.
-   - TradeCreated: Logs new trade offer creations.
-   - ItemRedeemed: Indicates item redemptions by users.
-9. getTrade: Allows retrieving details of a specific trade offer.
-10. CheckTheBalance: Enables users to check their DGN token balance.
-
+1. Mint Tokens ( onlyOwner ): This function allows the contract owner (deployer) to mint new DGN tokens and distribute them as needed.
+2. Burn Tokens: This function allows users to burn their own DGN tokens, effectively removing them from circulation.
+3. Get All Items: This function retrieves a list of all available items and their corresponding prices in DGN tokens.
+4. Redeem Item: This function allows users to spend their DGN tokens to redeem a specific item from the store. The contract checks the user's balance and burns the required amount of DGN tokens upon successful redemption.
+5. Get Redeemed Items: This function allows users to view their redemption history, displaying how many of each item they have redeemed so far.
+6. Transferring tokens: Users will be able to transfer their tokens to others.
+7. Checking token balance: Users will be able to check their token balance at any time.
 
 ## Authors
 
