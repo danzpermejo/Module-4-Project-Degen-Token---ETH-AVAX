@@ -1,84 +1,85 @@
-pragma solidity ^0.8.20;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract DegenToken is ERC20, Ownable {
-    event ItemTraded(address indexed from, address indexed to, string item, uint256 quantity);
-    event TradeCreated(uint256 tradeId, address indexed seller, string itemName, uint256 quantity, uint256 price);
-    event ItemRedeemed(address indexed redeemer, string item, uint256 quantity);
-    event ItemReceived(address indexed receiver, string item, uint256 quantity);
+    
+    mapping (string => uint256) public itemPrices;
 
-    struct Item { uint256 quantity; uint256 price; }
+    string[] private itemNames;
 
-    struct Trade { address seller; string itemName; uint256 quantity; uint256 price; }
+    mapping (address => mapping(string => uint256)) public redeemedItems;
 
-    mapping(string => Item) public items;
-    mapping(uint256 => Trade) public trades;
-    mapping(address => mapping(string => uint256)) public redeemedItems;
-    uint256 public tradeCounter;
+    
+    event TokensMinted(address indexed to, uint256 amount);
+    
+    event ItemRedeemed(address indexed by, string itemName, uint256 itemPrice, uint256 itemCount);
+    
+    event TokensBurned(address indexed from, uint256 amount);
 
-    constructor(address initialOwner) Ownable(initialOwner) ERC20("Degen", "DGN") {}
-
-    function mint(address to, uint256 amount) external onlyOwner { _mint(to, amount); }
-
-    function burn(uint256 amount) external { _burn(msg.sender, amount); }
-
-    function transfer(address to, uint256 amount) public override returns (bool) { _transfer(_msgSender(), to, amount); return true; }
-
-    function redeem(string memory itemName, uint256 quantity) external {
-        Item storage item = items[itemName];
-        require(item.quantity >= quantity, "Insufficient item quantity");
-        uint256 totalCost = item.price * quantity;
-        require(totalCost <= balanceOf(msg.sender), "Insufficient token balance");
-
+    
+    constructor() ERC20("Degen", "DGN") Ownable(msg.sender) {
         
-        _burn(msg.sender, totalCost);
-
-        
-        item.quantity -= quantity;
-
-        
-        redeemedItems[msg.sender][itemName] += quantity;
-
-        
-        emit ItemRedeemed(msg.sender, itemName, quantity);
+        itemPrices["hoodie"] = 700;
+        itemPrices["bagpack"] = 450;
+        itemPrices["af1"] = 1200;
+        itemPrices["shorts"] = 599;
+        itemPrices["eyeglasses"] = 300;
         
         
-        emit ItemReceived(msg.sender, itemName, quantity);
+        itemNames.push("hoodie");
+        itemNames.push("bagpack");
+        itemNames.push("af1");
+        itemNames.push("shorts");
+        itemNames.push("eyeglasses");
     }
 
-    function listItem(string memory itemName, uint256 quantity, uint256 price) public onlyOwner {
-        items[itemName] = Item({ quantity: quantity, price: price });
+    
+    function getAllItems() public view returns (string[] memory, uint256[] memory) {
+        uint256[] memory prices = new uint256[](itemNames.length);
+        for (uint256 i = 0; i < itemNames.length; i++) {
+            prices[i] = itemPrices[itemNames[i]];
+        }
+        return (itemNames, prices);
     }
 
-    function createTrade(string memory itemName, uint256 quantity, uint256 price) external {
-        require(quantity > 0, "Quantity must be greater than zero");
-        require(price > 0, "Price must be greater than zero");
+    
+    function mintTokens(address to, uint256 amount) external onlyOwner {
+        require(to != address(0), "Invalid address");
+        require(amount > 0, "Amount must be greater than zero");
 
-        uint256 tradeId = tradeCounter++; // Generate unique trade ID
-        trades[tradeId] = Trade({
-            seller: msg.sender,
-            itemName: itemName,
-            quantity: quantity,
-            price: price
-        });
-        emit TradeCreated(tradeId, msg.sender, itemName, quantity, price);
+        _mint(to, amount);
+        emit TokensMinted(to, amount);
     }
 
-    function completeTrade(uint256 tradeId) external {
-        Trade storage trade = trades[tradeId];
-        require(trade.quantity > 0 && trade.price * trade.quantity <= balanceOf(msg.sender), "Invalid trade completion");
-        _burn(msg.sender, trade.price * trade.quantity);
-        _mint(trade.seller, trade.price * trade.quantity);
-        emit ItemTraded(trade.seller, msg.sender, trade.itemName, trade.quantity);
-        delete trades[tradeId];
+    
+    function redeemItem(string memory itemName) external {
+        uint256 itemPrice = itemPrices[itemName];
+        require(itemPrice > 0, "Item not in the list");
+        require(balanceOf(msg.sender) >= itemPrice, "Insufficient balance");
+
+        _burn(msg.sender, itemPrice);
+        redeemedItems[msg.sender][itemName] += 1;  
+        emit ItemRedeemed(msg.sender, itemName, itemPrice, redeemedItems[msg.sender][itemName]);
     }
 
-    function getTrade(uint256 tradeId) external view returns (address seller, string memory itemName, uint256 quantity, uint256 price) {
-        Trade storage trade = trades[tradeId];
-        return (trade.seller, trade.itemName, trade.quantity, trade.price);
+    
+    function burnTokens(uint256 amount) external {
+        require(amount > 0, "Amount must be greater than zero");
+        require(balanceOf(msg.sender) >= amount, "Insufficient balance");
+
+        _burn(msg.sender, amount);
+        emit TokensBurned(msg.sender, amount);
     }
 
-    function checkTheBalance(address account) external view returns (uint256) { return balanceOf(account); }
+    
+    function getRedeemedItems(address user) external view returns (string[] memory, uint256[] memory) {
+        uint256[] memory itemCounts = new uint256[](itemNames.length);
+        for (uint256 i = 0; i < itemNames.length; i++) {
+            itemCounts[i] = redeemedItems[user][itemNames[i]];
+        }
+        return (itemNames, itemCounts);
+    }
 }
